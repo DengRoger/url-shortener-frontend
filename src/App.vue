@@ -22,6 +22,7 @@
 </template>
 
 <script>
+    import axios from 'axios';
     export default {
     data() {
       return {
@@ -31,27 +32,56 @@
         isUrlValid: true
       };
     },
+    created() {
+      const currentUrl = window.location.href;
+      const parts = currentUrl.split("/");
+      const lastPart = parts[parts.length - 1];
+      console.log(lastPart);
+      if(lastPart != ""){
+        axios.get("https://api.rogerdeng.net/api/query?id="+lastPart)
+        .then(response=>{
+          console.log(response);
+          if(response.data.successful){
+            window.location.href = response.data.original_url;
+            //this.shortenedUrl = "https://url.rogerdeng.net/"+response.data.short_url;
+          }
+          else{
+            alert(404);
+          }
+        })
+        .catch(error=>{
+          console.log(error.response);
+        });
+      }
+    },
     methods: {
       shortenUrl() {
-        // 檢查網址是否有效
         if (!this.isValidUrl(this.inputUrl)) {
           this.isUrlValid = false;
           return;
         }
-        // 網址有效，執行其他邏輯
         this.isUrlValid = true;
 
-        // 在此可以添加實際的縮短網址的邏輯
-        // 這裡只是模擬，將原始網址設定為縮短後網址
-        this.shortenedUrl = this.inputUrl;
         this.originalUrl = this.inputUrl;
+        axios.post("https://api.rogerdeng.net/api/insert",{
+          original_url: this.originalUrl
+        })
+        .then(response=>{
+          if(response.data.successful){
+            this.shortenedUrl = "https://url.rogerdeng.net/"+response.data.short_url;
+          }
+        })
+        .catch(error=>{
+          console.log(error.response);
+        })
       },
       isValidUrl(url) {
-        // 使用正則表達式檢查網址格式
         //eslint-disable-next-line
         const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})(:[1-9]\d{0,4})?([\/\w \.-]*)*\/?$/
         return urlPattern.test(url);
       }
+      
     }
+    
   };
 </script>
